@@ -4,8 +4,10 @@ import {jwtDecode} from "jwt-decode";
 
 export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
   pages: {
     signIn: "/login",
+    error: '/login',
   },
   session: {
     strategy: "jwt",
@@ -20,65 +22,93 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
-        const response = await fetch(`https://ecommerce.routemisr.com/api/v1/auth/signin`, {
-          method: "POST",
-          body: JSON.stringify({
-            email: credentials?.email,
-            password: credentials?.password,
-          }),
-          headers: { "Content-Type": "application/json" },
-        });
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Email and password are required");
+          }
 
-        type ApiAuthUser = { id?: string; _id?: string; name: string; email: string; role: string };
-        type SigninPayload = { message: string; token: string; user: ApiAuthUser };
+          const response = await fetch(`https://ecommerce.routemisr.com/api/v1/auth/signin`, {
+            method: "POST",
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+            headers: { 
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+          });
 
-        const payload: SigninPayload = await response.json();
-        console.log(payload);
+          type ApiAuthUser = { id?: string; _id?: string; name: string; email: string; role: string };
+          type SigninPayload = { message: string; token: string; user: ApiAuthUser };
 
-        if (response.ok && payload.message === "success") {
-          const u = payload.user;
-          const decoded = jwtDecode<{ id?: string }>(payload.token);
-          const idVal = decoded?.id || u.id || u._id || "";
+          const payload: SigninPayload = await response.json();
 
-          return {
-            id: idVal,
-            token: payload.token,
-            name: u.name,
-            email: u.email,
-            role: u.role,
-          };
+          if (response.ok && payload.message === "success" && payload.token) {
+            const u = payload.user;
+            const decoded = jwtDecode<{ id?: string }>(payload.token);
+            const idVal = decoded?.id || u.id || u._id || "";
+
+            if (!idVal) {
+              throw new Error("Invalid user ID in token");
+            }
+
+            return {
+              id: idVal,
+              token: payload.token,
+              name: u.name,
+              email: u.email,
+              role: u.role,
+            };
+          }
+
+          throw new Error(payload.message || "Authentication failed");
+        } catch (error: any) {
+          console.error("Auth error:", error);
+          throw new Error(error.message || "Authentication failed");
         }
-
-        throw new Error(payload.message || "failed to login");
       },
     }),
   ],
 
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        const u = user as { token: string; name: string; email: string; role: string };
-        const decoded = jwtDecode<{ id?: string }>(u.token);
-        return {
-          ...token,
-          id: decoded?.id ?? "",
-          token: u.token,
-          name: u.name,
-          email: u.email,
-          role: u.role,
-        };
+      try {
+        if (user) {
+          const u = user as { token: string; name: string; email: string; role: string };
+          const decoded = jwtDecode<{ id?: string }>(u.token);
+          
+          return {
+            ...token,
+            id: decoded?.id ?? "",
+            token: u.token,
+            name: u.name,
+            email: u.email,
+            role: u.role,
+          };
+        }
+        return token;
+      } catch (error) {
+        console.error("JWT callback error:", error);
+        return token;
       }
-      return token;
     },
 
     async session({ session, token }) {
-      session.user = {
-        token: (token as any).token,
-        name: (token as any).name,
-        email: (token as any).email,
-        role: (token as any).role,
-      };
-      return session;
+      try {
+        if (token && typeof token === 'object') {
+          session.user = {
+            token: token.token as string,
+            name: token.name as string,
+            email: token.email as string,
+            role: token.role as string,
+          };
+        }
+        return session;
+      } catch (error) {
+        console.error("Session callback error:", error);
+        return session;
+      }
     },
   },
 };

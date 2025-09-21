@@ -3,6 +3,7 @@ import { AuthOptions } from "next-auth";
 import {jwtDecode} from "jwt-decode";
 
 export const authOptions: AuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
   },

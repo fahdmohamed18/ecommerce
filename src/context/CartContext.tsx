@@ -9,20 +9,18 @@ import { clearCartAction } from "@/cartAction/clearCart";
 
 import { Cart, ProductCart } from "@/types/cart.type";
 
-
 interface CartContextType {
   numOfCartItems: number;
   totalCartPrice: number;
   isLoading: boolean;
   cartId: string;
   products: ProductCart[];
-  addProductToCart: (id: string) => Promise<any>;
-  removeCartItem: (id: string) => Promise<any>;
-  updateCart: (id: string, count: number) => Promise<any>;
-  clearCart: () => Promise<any>;
+  addProductToCart: (id: string) => Promise<Cart | undefined>;
+  removeCartItem: (id: string) => Promise<Cart | undefined>;
+  updateCart: (id: string, count: number) => Promise<Cart | undefined>;
+  clearCart: () => Promise<void>;
   afterPayment: () => void;
 }
-
 
 export const cartContext = createContext<CartContextType>({
   numOfCartItems: 0,
@@ -30,13 +28,12 @@ export const cartContext = createContext<CartContextType>({
   isLoading: false,
   cartId: "",
   products: [],
-  addProductToCart: async () => {},
-  removeCartItem: async () => {},
-  updateCart: async () => {},
+  addProductToCart: async () => undefined,
+  removeCartItem: async () => undefined,
+  updateCart: async () => undefined,
   clearCart: async () => {},
   afterPayment: () => {},
 });
-
 
 const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [numOfCartItems, setNumOfCartItems] = useState(0);
@@ -45,9 +42,9 @@ const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [cartId, setCartId] = useState("");
   const [products, setProducts] = useState<ProductCart[]>([]);
 
-  async function addProductToCart(id: string) {
+  async function addProductToCart(id: string): Promise<Cart | undefined> {
     try {
-      const data = await addToCartAction(id);
+      const data: Cart = await addToCartAction(id);
       await getUserCart();
       return data;
     } catch (error) {
@@ -55,8 +52,7 @@ const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-
-  async function removeCartItem(id: string) {
+  async function removeCartItem(id: string): Promise<Cart | undefined> {
     try {
       const data: Cart = await removeCartItemAction(id);
       setNumOfCartItems(data.numOfCartItems);
@@ -68,8 +64,7 @@ const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-
-  async function updateCart(id: string, count: number) {
+  async function updateCart(id: string, count: number): Promise<Cart | undefined> {
     try {
       const data: Cart = await updateCartAction(id, count);
       setNumOfCartItems(data.numOfCartItems);
@@ -81,7 +76,7 @@ const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-  async function clearCart() {
+  async function clearCart(): Promise<void> {
     try {
       await clearCartAction();
       setNumOfCartItems(0);
@@ -92,7 +87,6 @@ const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Clear cart error:", error);
     }
   }
-
 
   async function getUserCart() {
     setIsLoading(true);

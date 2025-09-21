@@ -4,14 +4,14 @@ import { getUserWishListAction } from '@/wishListAction/getUserWishList'
 import { addToWishListAction } from '@/wishListAction/addToWishList'
 import { removeWishListItemAction } from '@/wishListAction/RemoveWishList'
 import { Product } from '@/types/product.type'
+import { WishListResponse, WishListActionResponse } from '@/types/wishlistTypes';
 
 interface WishListContextType {
   wishListItems: Product[]
   numOfWishListItems: number
   isLoading: boolean
-  // Optionally pass the full product for a snappier optimistic UI
-  addToWishList: (id: string, product?: Product) => Promise<any>
-  removeFromWishList: (id: string) => Promise<any>
+  addToWishList: (id: string, product?: Product) => Promise<WishListActionResponse | undefined>
+  removeFromWishList: (id: string) => Promise<WishListActionResponse | undefined>
   getWishList: () => Promise<void>
 }
 
@@ -19,8 +19,8 @@ export const wishListContext = createContext<WishListContextType>({
   wishListItems: [],
   numOfWishListItems: 0,
   isLoading: false,
-  addToWishList: async () => {},
-  removeFromWishList: async () => {},
+  addToWishList: async () => undefined,
+  removeFromWishList: async () => undefined,
   getWishList: async () => {}
 })
 
@@ -32,7 +32,7 @@ const WishListContextProvider = ({ children }: { children: React.ReactNode }) =>
   async function getWishList() {
     setIsLoading(true)
     try {
-      const data = await getUserWishListAction()
+      const data: WishListResponse = await getUserWishListAction()
       if (data.status === 'success') {
         setWishListItems(data.data)
         setNumOfWishListItems(data.count)
@@ -43,13 +43,11 @@ const WishListContextProvider = ({ children }: { children: React.ReactNode }) =>
     setIsLoading(false)
   }
 
-  async function addToWishList(id: string, product?: Product) {
-    // Prevent duplicates
+  async function addToWishList(id: string, product?: Product): Promise<WishListActionResponse | undefined> {
     if (wishListItems.some((p) => p._id === id)) {
-      return { status: 'exists' }
+      return { status: 'exists', message: 'Product already in wishlist' }
     }
 
-    // Optimistic update
     const prevItems = wishListItems
     const prevCount = numOfWishListItems
     try {
@@ -58,18 +56,15 @@ const WishListContextProvider = ({ children }: { children: React.ReactNode }) =>
       }
       setNumOfWishListItems(prevCount + 1)
 
-      const data = await addToWishListAction(id)
+      const data: WishListActionResponse = await addToWishListAction(id)
       if (data.status !== 'success') {
-        // Rollback on unexpected response
         setWishListItems(prevItems)
         setNumOfWishListItems(prevCount)
       } else {
-        // Sync to be 100% accurate
         await getWishList()
       }
       return data
     } catch (error) {
-      // Rollback on error
       setWishListItems(prevItems)
       setNumOfWishListItems(prevCount)
       console.error('Failed to add to wishlist')
@@ -77,23 +72,20 @@ const WishListContextProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }
 
-  async function removeFromWishList(id: string) {
-    // Optimistic update
+  async function removeFromWishList(id: string): Promise<WishListActionResponse | undefined> {
     const prevItems = wishListItems
     const prevCount = numOfWishListItems
     try {
       setWishListItems(prevItems.filter((p) => p._id !== id))
       setNumOfWishListItems(Math.max(0, prevCount - 1))
 
-      const data = await removeWishListItemAction(id)
+      const data: WishListActionResponse = await removeWishListItemAction(id)
       if (data.status !== 'success') {
-        // Rollback on unexpected response
         setWishListItems(prevItems)
         setNumOfWishListItems(prevCount)
       }
       return data
     } catch (error) {
-      // Rollback on error
       setWishListItems(prevItems)
       setNumOfWishListItems(prevCount)
       console.error('Failed to remove from wishlist')

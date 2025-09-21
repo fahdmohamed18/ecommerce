@@ -22,10 +22,24 @@ import {
   resetPasswordSchema,
   ResetPasswordSchemaType,
 } from "@/schema/forgot.schema";
-import { forgotPasswords, verifyResetCode, resetPassword } from "@/apis/authClient";
+import {
+  forgotPasswords,
+  verifyResetCode,
+  resetPassword,
+} from "@/apis/authClient";
 import { useRouter } from "next/navigation";
 
 type Step = 1 | 2 | 3;
+
+// تعريف نوع للـ Error بدل any
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+    };
+  };
+}
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>(1);
@@ -56,8 +70,9 @@ export default function ForgotPasswordPage() {
         position: "top-center",
       });
       setStep(2);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to send code", {
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      toast.error(error?.response?.data?.message || "Failed to send code", {
         position: "top-center",
       });
     }
@@ -68,8 +83,9 @@ export default function ForgotPasswordPage() {
       const res = await verifyResetCode(values.resetCode);
       toast.success(res.message || "Code verified", { position: "top-center" });
       setStep(3);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Invalid code", {
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      toast.error(error?.response?.data?.message || "Invalid code", {
         position: "top-center",
       });
     }
@@ -82,8 +98,9 @@ export default function ForgotPasswordPage() {
         position: "top-center",
       });
       router.push("/login");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Reset failed", {
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      toast.error(error?.response?.data?.message || "Reset failed", {
         position: "top-center",
       });
     }
@@ -106,16 +123,23 @@ export default function ForgotPasswordPage() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="you@example.com" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="you@example.com"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
-                    We'll send a verification code to this email.
+                    We&apos;ll send a verification code to this email.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button className="w-full mt-5" disabled={emailForm.formState.isSubmitting}>
+            <Button
+              className="w-full mt-5"
+              disabled={emailForm.formState.isSubmitting}
+            >
               {emailForm.formState.isSubmitting ? "Sending..." : "Send Code"}
             </Button>
           </form>
@@ -132,7 +156,10 @@ export default function ForgotPasswordPage() {
                 <FormItem>
                   <FormLabel>Verification Code</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter the code sent to your email" {...field} />
+                    <Input
+                      placeholder="Enter the code sent to your email"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
                     Check your inbox and spam folder. Sent to: <b>{email}</b>
@@ -142,11 +169,20 @@ export default function ForgotPasswordPage() {
               )}
             />
             <div className="flex items-center gap-3 mt-5">
-              <Button type="button" variant="secondary" onClick={() => setStep(1)}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setStep(1)}
+              >
                 Back
               </Button>
-              <Button className="flex-1" disabled={codeForm.formState.isSubmitting}>
-                {codeForm.formState.isSubmitting ? "Verifying..." : "Verify Code"}
+              <Button
+                className="flex-1"
+                disabled={codeForm.formState.isSubmitting}
+              >
+                {codeForm.formState.isSubmitting
+                  ? "Verifying..."
+                  : "Verify Code"}
               </Button>
             </div>
           </form>
@@ -199,11 +235,20 @@ export default function ForgotPasswordPage() {
               )}
             />
             <div className="flex items-center gap-3 mt-5">
-              <Button type="button" variant="secondary" onClick={() => setStep(2)}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setStep(2)}
+              >
                 Back
               </Button>
-              <Button className="flex-1" disabled={resetForm.formState.isSubmitting}>
-                {resetForm.formState.isSubmitting ? "Updating..." : "Update Password"}
+              <Button
+                className="flex-1"
+                disabled={resetForm.formState.isSubmitting}
+              >
+                {resetForm.formState.isSubmitting
+                  ? "Updating..."
+                  : "Update Password"}
               </Button>
             </div>
           </form>

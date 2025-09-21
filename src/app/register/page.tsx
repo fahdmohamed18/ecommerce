@@ -12,15 +12,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { registerSchema, RegisterSchemaType } from "@/schema/register.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const Register = () => {
-
-  const router = useRouter(); 
+  const router = useRouter();
 
   const form = useForm<RegisterSchemaType>({
     defaultValues: {
@@ -33,21 +32,32 @@ const Register = () => {
     resolver: zodResolver(registerSchema),
   });
 
-  async function handleRegister(values : RegisterSchemaType) {
+  async function handleRegister(values: RegisterSchemaType) {
     try {
-      const {data} = await axios.post("https://ecommerce.routemisr.com/api/v1/auth/signup", values);
+      const { data } = await axios.post(
+        "https://ecommerce.routemisr.com/api/v1/auth/signup",
+        values
+      );
       console.log(data);
-      toast.success(data.message , {
+      toast.success(data.message, {
         position: "top-center",
         duration: 4000,
       });
       router.push("/login");
-    } catch (error) {
-      toast.error((error as any).response.data.message, {
-        position: "top-center",
-        duration: 4000,
-      });
-      console.log(error);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || "Something went wrong", {
+          position: "top-center",
+          duration: 4000,
+        });
+        console.log(error.response);
+      } else {
+        toast.error("An unexpected error occurred", {
+          position: "top-center",
+          duration: 4000,
+        });
+        console.error(error);
+      }
     }
   }
 
@@ -63,7 +73,7 @@ const Register = () => {
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input type="text"  {...field} />
+                  <Input type="text" {...field} />
                 </FormControl>
                 <FormDescription />
                 <FormMessage />
@@ -77,7 +87,7 @@ const Register = () => {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email"  {...field} />
+                  <Input type="email" {...field} />
                 </FormControl>
                 <FormDescription />
                 <FormMessage />
@@ -91,7 +101,7 @@ const Register = () => {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password"  {...field} />
+                  <Input type="password" {...field} />
                 </FormControl>
                 <FormDescription />
                 <FormMessage />
@@ -105,7 +115,7 @@ const Register = () => {
               <FormItem>
                 <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
-                  <Input type="password"  {...field} />
+                  <Input type="password" {...field} />
                 </FormControl>
                 <FormDescription />
                 <FormMessage />
@@ -119,7 +129,7 @@ const Register = () => {
               <FormItem>
                 <FormLabel>Phone</FormLabel>
                 <FormControl>
-                  <Input type="tel"  {...field} />
+                  <Input type="tel" {...field} />
                 </FormControl>
                 <FormDescription />
                 <FormMessage />

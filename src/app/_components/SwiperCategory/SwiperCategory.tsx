@@ -5,21 +5,17 @@ import { Navigation } from 'swiper/modules'
 // Import Swiper styles
 import 'swiper/css'
 import 'swiper/css/navigation'
-// Pagination CSS not needed for custom dots
 import Image from 'next/image'
 import { Category } from '@/types/category.type'
 
-const SwiperCategory = ({ categories }: {categories: Category[]}) => {
 
-    /*
-    static => Image webp
+import type { Swiper as SwiperType } from 'swiper'
 
-    api => img
-    */
-  // refs for custom nav and pagination containers
+const SwiperCategory = ({ categories }: { categories: Category[] }) => {
+
   const prevRef = useRef<HTMLButtonElement | null>(null)
   const nextRef = useRef<HTMLButtonElement | null>(null)
-  const swiperRef = useRef<any>(null)
+  const swiperRef = useRef<SwiperType | null>(null)
 
   return (
     <div className="relative w-full">
@@ -45,12 +41,15 @@ const SwiperCategory = ({ categories }: {categories: Category[]}) => {
         spaceBetween={8}
         slidesPerView={5}
         loop={true}
-        // Attach custom elements just before init so refs are set
         onBeforeInit={(swiper) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const s: any = swiper
-          s.params.navigation.prevEl = prevRef.current
-          s.params.navigation.nextEl = nextRef.current
+          // بنعمل cast للـ swiper عشان نعدل params
+          const s = swiper as SwiperType
+          if (s.params.navigation) {
+            Object.assign(s.params.navigation, {
+              prevEl: prevRef.current,
+              nextEl: nextRef.current,
+            })
+          }
         }}
         onSwiper={(swiper) => {
           swiperRef.current = swiper

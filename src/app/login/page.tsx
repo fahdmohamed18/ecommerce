@@ -12,7 +12,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { loginSchema, LoginSchemaType } from "@/schema/login.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -21,8 +20,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 const Login = () => {
-
-  const router = useRouter(); 
+  const router = useRouter();
 
   const form = useForm<LoginSchemaType>({
     defaultValues: {
@@ -32,49 +30,27 @@ const Login = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  async function handleLogin(values : LoginSchemaType) {
-    // try {
-    //   const {data} = await axios.post("https://ecommerce.routemisr.com/api/v1/auth/signin", values);
-    //   console.log(data);
-    //   toast.success(data.message , {
-    //     position: "top-center",
-    //     duration: 4000,
-    //   });
-    //   router.push("/");
-    // } catch (error) {
-    //   toast.error((error as any).response.data.message, {
-    //     position: "top-center",
-    //     duration: 4000,
-    //   });
-    //   console.log(error);
-    // }
-
-
-    const res = await signIn("credentials" , {
+  async function handleLogin(values: LoginSchemaType) {
+    const res = await signIn("credentials", {
       email: values.email,
       password: values.password,
       redirect: false,
-      callbackUrl: "/"
-    }) 
+      callbackUrl: "/",
+    });
 
-    if(res?.ok){
+    if (res?.ok) {
       toast.success("Login successful", {
         position: "top-center",
         duration: 2000,
       });
-
-      // window.location.href = res?.url || "/";
       router.push(res.url || "/");
       router.refresh();
-    }
-
-    else{
+    } else {
       toast.error(res?.error || "Login failed", {
         position: "top-center",
         duration: 2000,
       });
     }
-
   }
 
   return (
@@ -89,7 +65,7 @@ const Login = () => {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email"  {...field} />
+                  <Input type="email" {...field} />
                 </FormControl>
                 <FormDescription />
                 <FormMessage />
@@ -103,18 +79,19 @@ const Login = () => {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password"  {...field} />
+                  <Input type="password" {...field} />
                 </FormControl>
                 <FormDescription />
                 <FormMessage />
               </FormItem>
             )}
           />
-
-
           <Button className="w-full mt-5">Login Now</Button>
           <div className="mt-3 text-center">
-            <Link href="/forgot-password" className="text-primary hover:underline text-sm">
+            <Link
+              href="/forgot-password"
+              className="text-primary hover:underline text-sm"
+            >
               Forgot your password?
             </Link>
           </div>

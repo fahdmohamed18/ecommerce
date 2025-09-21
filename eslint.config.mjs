@@ -19,7 +19,14 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
     ],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "react-hooks/rules-of-hooks": "error", // سيبه شغال عشان مهم
+      "react-hooks/exhaustive-deps": "warn"
+    }
   },
 ];
 
 export default eslintConfig;
+

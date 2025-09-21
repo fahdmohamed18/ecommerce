@@ -13,13 +13,14 @@ const WishList = () => {
   async function removeItem(id: string) {
     try {
       const data = await removeFromWishList(id)
-      if (data.status === "success") {
+      if (data?.status === "success") {
         toast.success("Item removed from wishlist", {
           position: "top-center",
           duration: 1000,
         })
       }
     } catch (error) {
+      console.error("Error removing from wishlist:", error)
       toast.error("Failed to remove from wishlist", {
         position: "top-center",
         duration: 1000,
@@ -46,8 +47,10 @@ const WishList = () => {
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
           {wishListItems.map((product) => (
-            <div key={product._id} 
-                 className='flex items-start space-x-4 p-4 bg-white rounded-lg shadow-sm'>
+            <div
+              key={product._id}
+              className='flex items-start space-x-4 p-4 bg-white rounded-lg shadow-sm'
+            >
               <Link href={`/productDetails/${product._id}`} className="flex-shrink-0">
                 <Image 
                   width={150} 
@@ -61,10 +64,14 @@ const WishList = () => {
               <div className='flex-grow'>
                 <Link href={`/productDetails/${product._id}`}>
                   <h2 className='font-semibold text-lg hover:text-green-600 transition-colors'>
-                    {product.title.length > 50 ? `${product.title.substring(0, 50)}...` : product.title}
+                    {product.title.length > 50 
+                      ? `${product.title.substring(0, 50)}...` 
+                      : product.title}
                   </h2>
                 </Link>
-                <p className='my-2 text-green-600 font-medium'>Price: {product.price} EGP</p>
+                <p className='my-2 text-green-600 font-medium'>
+                  Price: {product.price} EGP
+                </p>
                 <Button 
                   onClick={() => removeItem(product._id)}
                   variant="destructive"

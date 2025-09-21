@@ -18,7 +18,6 @@ import {
   changePasswordSchema,
   ChangePasswordSchemaType,
 } from "@/schema/changePassword.schema";
-// Client should call our local API route which proxies to the server action
 
 export default function ChangePasswordPage() {
   const form = useForm<ChangePasswordSchemaType>({
@@ -39,8 +38,18 @@ export default function ChangePasswordPage() {
         position: "top-center",
       });
       form.reset();
-    } catch (err: any) {
-      toast.error(err?.message || "Change failed", {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : (typeof err === "object" &&
+              err !== null &&
+              "message" in err &&
+              typeof (err as { message?: string }).message === "string" &&
+              (err as { message?: string }).message) ||
+            "Change failed";
+
+      toast.error(message, {
         position: "top-center",
       });
     }

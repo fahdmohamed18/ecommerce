@@ -1,0 +1,14 @@
+import "next-auth/jwt";
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    user: {
+      id: string;
+      token: string;
+      name: string;
+      email: string;
+      role: string;
+    };
+    token: string;
+  }
+}

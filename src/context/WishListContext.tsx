@@ -1,5 +1,6 @@
 "use client"
 import React, { createContext, useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { getUserWishListAction } from '@/wishListAction/getUserWishList'
 import { addToWishListAction } from '@/wishListAction/addToWishList'
 import { removeWishListItemAction } from '@/wishListAction/RemoveWishList'
@@ -25,20 +26,32 @@ export const wishListContext = createContext<WishListContextType>({
 })
 
 const WishListContextProvider = ({ children }: { children: React.ReactNode }) => {
+  const { data: session, status } = useSession()
   const [wishListItems, setWishListItems] = useState<Product[]>([])
   const [numOfWishListItems, setNumOfWishListItems] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
 
   async function getWishList() {
+    if (!session?.user?.token) {
+      return;
+    }
+
     setIsLoading(true)
     try {
       const data: WishListResponse = await getUserWishListAction()
       if (data.status === 'success') {
         setWishListItems(data.data)
         setNumOfWishListItems(data.count)
+      } else {
+        // Handle error response
+        setWishListItems([])
+        setNumOfWishListItems(0)
       }
     } catch (error) {
-      console.error('Failed to fetch wishlist')
+      console.error('Failed to fetch wishlist:', error)
+      // Reset wishlist state on error
+      setWishListItems([])
+      setNumOfWishListItems(0)
     }
     setIsLoading(false)
   }
@@ -94,8 +107,14 @@ const WishListContextProvider = ({ children }: { children: React.ReactNode }) =>
   }
 
   useEffect(() => {
-    getWishList()
-  }, [])
+    if (status === 'authenticated' && session?.user?.token) {
+      getWishList()
+    } else if (status === 'unauthenticated') {
+      // Clear wishlist when user logs out
+      setWishListItems([])
+      setNumOfWishListItems(0)
+    }
+  }, [status, session])
 
   return (
     <wishListContext.Provider value={{

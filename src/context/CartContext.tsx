@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { getUserCartAction } from "@/cartAction/getUserCart";
 import { addToCartAction } from "@/cartAction/addToCart";
 import { removeCartItemAction } from "@/cartAction/removeCartItem";
@@ -36,6 +37,7 @@ export const cartContext = createContext<CartContextType>({
 });
 
 const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
+  const { data: session, status } = useSession();
   const [numOfCartItems, setNumOfCartItems] = useState(0);
   const [totalCartPrice, setTotalCartPrice] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -89,15 +91,32 @@ const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   async function getUserCart() {
+    if (!session?.user?.token) {
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const data: Cart = await getUserCartAction();
-      setNumOfCartItems(data.numOfCartItems);
-      setProducts(data.data.products);
-      setTotalCartPrice(data.data.totalCartPrice);
-      setCartId(data.cartId);
+      if (data.status === 'error') {
+        // Handle error response
+        setNumOfCartItems(0);
+        setProducts([]);
+        setTotalCartPrice(0);
+        setCartId("");
+      } else {
+        setNumOfCartItems(data.numOfCartItems);
+        setProducts(data.data.products);
+        setTotalCartPrice(data.data.totalCartPrice);
+        setCartId(data.cartId);
+      }
     } catch (error) {
       console.error("Get cart error:", error);
+      // Reset cart state on error
+      setNumOfCartItems(0);
+      setProducts([]);
+      setTotalCartPrice(0);
+      setCartId("");
     } finally {
       setIsLoading(false);
     }
@@ -111,8 +130,16 @@ const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   useEffect(() => {
-    getUserCart();
-  }, []);
+    if (status === 'authenticated' && session?.user?.token) {
+      getUserCart();
+    } else if (status === 'unauthenticated') {
+      // Clear cart when user logs out
+      setNumOfCartItems(0);
+      setProducts([]);
+      setTotalCartPrice(0);
+      setCartId("");
+    }
+  }, [status, session]);
 
   return (
     <cartContext.Provider

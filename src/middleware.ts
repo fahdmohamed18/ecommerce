@@ -11,11 +11,11 @@ export async function middleware(request: NextRequest) {
 
     const { pathname } = request.nextUrl
 
-    const authPages = ["/login" , "/register"]
-    const routes = ["/" , "/allorders" , "/payment", "/brands" , "/categories" , "/cart" , "/productDetails"]
+    const authPages = ["/login", "/register"]
+    const protectedRoutes = ["/allorders", "/payment", "/cart", "/wishList"]
 
     // Redirect to login if accessing protected route without token
-    if (!token && routes.includes(pathname)) {
+    if (!token && protectedRoutes.some(route => pathname.startsWith(route))) {
         const url = new URL('/login', request.url)
         url.searchParams.set('callbackUrl', encodeURIComponent(pathname))
         return NextResponse.redirect(url)
@@ -31,5 +31,5 @@ export async function middleware(request: NextRequest) {
 
 // See "Matching Paths" below to learn more
 export const config = {
-  matcher: ["/" , "/allorders" , "/payment" , "/brands" , "/categories" , "/cart" , "/productDetails/:path*" , "/login" , "/register"],
+  matcher: ["/allorders", "/payment", "/cart", "/wishList", "/login", "/register"],
 }

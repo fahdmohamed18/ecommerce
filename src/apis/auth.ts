@@ -10,15 +10,31 @@ export async function changeMyPassword(
   password: string,
   rePassword: string
 ) {
-  const token = await getMyToken();
-  const { data } = await axios.put(
-    `${BASE_URL}/users/changeMyPassword`,
-    { currentPassword, password, rePassword },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  try {
+    const token = await getMyToken();
+    
+    if (!token) {
+      return {
+        status: 'error',
+        message: 'User not authenticated'
+      }
     }
-  );
-  return data;
+
+    const { data } = await axios.put(
+      `${BASE_URL}/users/changeMyPassword`,
+      { currentPassword, password, rePassword },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return data;
+  } catch (error: any) {
+    console.error('changeMyPassword error:', error);
+    return {
+      status: 'error',
+      message: error.message || 'Failed to change password'
+    }
+  }
 }

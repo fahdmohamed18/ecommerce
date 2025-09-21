@@ -5,6 +5,9 @@ import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
 const shortId = (id: string) => `#${id.slice(-6).toUpperCase()}`
 const itemsCount = (order: Order) => order.cartItems.reduce((sum, it) => sum + (it.count ?? 1), 0)

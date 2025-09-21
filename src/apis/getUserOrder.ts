@@ -4,14 +4,35 @@ import { getMyToken } from "@/utilities/token"
 import axios from "axios"
 import { jwtDecode } from "jwt-decode"
 
-export async function getUserOrder(){
-    const token = await getMyToken()
-    const {id}: {id: string} = jwtDecode(token as string)
+export async function getUserOrder() {
+    try {
+        const token = await getMyToken();
+        
+        if (!token) {
+            throw new Error("Authentication required");
+        }
 
-    if(!token) {
-        throw new Error("Login first")
+        try {
+            const { id }: { id: string } = jwtDecode(token);
+            if (!id) {
+                throw new Error("Invalid user token");
+            }
+
+            const { data } = await axios.get(
+                `https://ecommerce.routemisr.com/api/v1/orders/user/${id}`,
+                {
+                    headers: {
+                        'token': token
+                    }
+                }
+            );
+            return data;
+        } catch (decodeError) {
+            console.error('Token decode error:', decodeError);
+            throw new Error("Invalid authentication token");
+        }
+    } catch (error: any) {
+        console.error('Get user order error:', error);
+        return [];
     }
-
-    const {data} = await axios.get(`https://ecommerce.routemisr.com/api/v1/orders/user/${id}`)
-    return data;
 }

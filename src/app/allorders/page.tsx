@@ -1,21 +1,69 @@
+'use client'
 import { getUserOrder } from '@/apis/getUserOrder'
 import { CartItem, Order, Orders } from '@/types/order.type'
 import Image from 'next/image'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+import { useSession } from 'next-auth/react'
 
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
 const shortId = (id: string) => `#${id.slice(-6).toUpperCase()}`
 const itemsCount = (order: Order) => order.cartItems.reduce((sum, it) => sum + (it.count ?? 1), 0)
 
-const AllOrders = async () => {
-  const data: Orders = await getUserOrder()
+const AllOrders = () => {
+  const { data: session, status } = useSession()
+  const [orders, setOrders] = useState<Orders>([])
+  const [loading, setLoading] = useState(true)
 
-  if (!data || data.length === 0) {
+  useEffect(() => {
+    async function fetchOrders() {
+      if (status === 'authenticated') {
+        try {
+          const data = await getUserOrder()
+          setOrders(data || [])
+        } catch (error) {
+          console.error('Error fetching orders:', error)
+          setOrders([])
+        } finally {
+          setLoading(false)
+        }
+      } else if (status === 'unauthenticated') {
+        setOrders([])
+        setLoading(false)
+      }
+    }
+
+    fetchOrders()
+  }, [status])
+
+  if (loading) {
+    return (
+      <div className='md:w-[80%] mx-auto w-full my-16 px-5 md:px-0'>
+        <div className='bg-white rounded-xl shadow-sm border border-slate-200 p-10 text-center'>
+          <p>Loading orders...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className='md:w-[80%] mx-auto w-full my-16 px-5 md:px-0'>
+        <div className='bg-white rounded-xl shadow-sm border border-slate-200 p-10 text-center'>
+          <h2 className='text-2xl font-semibold mb-2'>Please log in</h2>
+          <p className='text-slate-600'>
+            You need to be logged in to view your orders.
+          </p>
+          <Link href="/login" className="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+            Login
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (!orders || orders.length === 0) {
     return (
       <div className='md:w-[80%] mx-auto w-full my-16 px-5 md:px-0'>
         <div className='bg-white rounded-xl shadow-sm border border-slate-200 p-10 text-center'>
@@ -33,7 +81,7 @@ const AllOrders = async () => {
       <h1 className='text-2xl md:text-3xl font-bold mb-6'>Your Orders</h1>
 
       <div className='space-y-6'>
-        {data.map((order: Order) => (
+        {orders.map((order: Order) => (
           <div key={order._id} className='bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden'>
             {/* Header */}
             <div className='flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 md:px-6 py-4 border-b border-slate-200'>

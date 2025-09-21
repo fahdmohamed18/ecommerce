@@ -8,14 +8,12 @@ export async function getMyToken() {
         // Ensure cookies() is available
         const cookieStore = await cookies();
         if (!cookieStore) {
-            console.log("No cookie store available");
             return null;
         }
 
         const sessionToken = cookieStore.get("next-auth.session-token")?.value;
         if (!sessionToken) {
-            console.log("No session token found in cookies");
-            return null;
+            return null; // Silently return null instead of logging
         }
 
         // Ensure NEXTAUTH_SECRET is available
@@ -31,18 +29,19 @@ export async function getMyToken() {
         });
 
         if (!token) {
-            console.log("Failed to decode token");
             return null;
         }
 
         if (!token.token) {
-            console.log("No token property in decoded token");
             return null;
         }
 
         return token.token;
     } catch (error) {
-        console.error('Error getting token:', error);
+        // Only log actual errors, not missing tokens
+        if (error instanceof Error && !error.message.includes('Invalid token')) {
+            console.error('Unexpected error getting token:', error);
+        }
         return null;
     }
 }

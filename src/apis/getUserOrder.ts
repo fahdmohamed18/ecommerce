@@ -10,13 +10,11 @@ export async function getUserOrder() {
         const token = await getMyToken();
         
         if (!token) {
-            console.log("No authentication token found, returning empty orders");
-            return [];
+            return []; // Silently return empty array
         }
 
         // Double-check token is valid
         if (typeof token !== 'string' || token.trim() === '') {
-            console.log("Invalid token format, returning empty orders");
             return [];
         }
 
@@ -25,11 +23,9 @@ export async function getUserOrder() {
             const decoded = jwtDecode<{ id?: string }>(token);
             userId = decoded?.id || '';
             if (!userId) {
-                console.log("No user ID in token, returning empty orders");
                 return [];
             }
         } catch (decodeError) {
-            console.error('Token decode error:', decodeError);
             return [];
         }
 
@@ -45,11 +41,9 @@ export async function getUserOrder() {
             );
             return Array.isArray(data) ? data : [];
         } catch (apiError) {
-            console.error('API request error:', apiError);
             return [];
         }
     } catch (error: any) {
-        console.error('getUserOrder unexpected error:', error);
         return [];
     }
 }

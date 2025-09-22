@@ -5,40 +5,34 @@ import { cookies } from "next/headers";
 
 export async function getMyToken() {
     try {
-        // Ensure cookies() is available
         const cookieStore = await cookies();
         if (!cookieStore) {
             return null;
         }
 
-        const sessionToken = cookieStore.get("next-auth.session-token")?.value;
+        // Try both session token formats for production and development
+        const sessionToken = cookieStore.get("next-auth.session-token")?.value || 
+                            cookieStore.get("__Secure-next-auth.session-token")?.value;
+        
         if (!sessionToken) {
-            return null; // Silently return null instead of logging
+            return null;
         }
 
-        // Ensure NEXTAUTH_SECRET is available
         const secret = process.env.NEXTAUTH_SECRET;
         if (!secret) {
             console.error("NEXTAUTH_SECRET is not defined");
             return null;
         }
 
-        const token = await decode({
+        const decodedToken = await decode({
             token: sessionToken,
             secret: secret
         });
 
-        if (!token) {
-            return null;
-        }
+        console.log("tokennddd", decodedToken?.token);
 
-        if (!token.token) {
-            return null;
-        }
-
-        return token.token;
+        return decodedToken?.token;
     } catch (error) {
-        // Only log actual errors, not missing tokens
         if (error instanceof Error && !error.message.includes('Invalid token')) {
             console.error('Unexpected error getting token:', error);
         }

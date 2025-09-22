@@ -4,32 +4,18 @@ import type { NextRequest } from 'next/server'
  
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
-    const token = await getToken({
-        req: request,
-        secret: process.env.NEXTAUTH_SECRET
-    });
+    const cookieName = process.env.NODE_ENV === "production" ? "__Secure-next-auth.session-token" : "next-auth.session-token";
+    const token = await getToken({ req: request, cookieName });
+    console.log(token);
 
-    const { pathname } = request.nextUrl
-
-    const authPages = ["/login", "/register"]
-    const protectedRoutes = ["/allorders", "/payment", "/cart", "/wishList"]
-
-    // Redirect to login if accessing protected route without token
-    if (!token && protectedRoutes.some(route => pathname.startsWith(route))) {
-        const url = new URL('/login', request.url)
-        url.searchParams.set('callbackUrl', encodeURIComponent(pathname))
-        return NextResponse.redirect(url)
+    if (token) {
+        return NextResponse.next();
     }
 
-    // Redirect to home if accessing auth pages while logged in
-    if (token && authPages.includes(pathname)) {
-        return NextResponse.redirect(new URL('/', request.url))
-    }
-
-    return NextResponse.next()
+    return NextResponse.redirect(new URL('/login', request.url));
 }
 
 // See "Matching Paths" below to learn more
 export const config = {
-  matcher: ["/allorders", "/payment", "/cart", "/wishList", "/login", "/register"],
+  matcher: ['/'],
 }

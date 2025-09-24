@@ -8,14 +8,27 @@ export async function middleware(request: NextRequest) {
     const token = await getToken({ req: request, cookieName });
     console.log(token);
 
-    if (token) {
-        return NextResponse.next();
+    const { pathname } = request.nextUrl;
+
+    const authPages = ["/login", "/register"];
+    const protectedRoutes = ["/allorders", "/payment", "/cart", "/wishList"];
+
+    // Redirect to login if accessing protected route without token
+    if (!token && protectedRoutes.some(route => pathname.startsWith(route))) {
+        const url = new URL('/login', request.url);
+        url.searchParams.set('callbackUrl', encodeURIComponent(pathname));
+        return NextResponse.redirect(url);
     }
 
-    return NextResponse.redirect(new URL('/login', request.url));
+    // Redirect to home if accessing auth pages while logged in
+    if (token && authPages.includes(pathname)) {
+        return NextResponse.redirect(new URL('/', request.url));
+    }
+
+    return NextResponse.next();
 }
 
 // See "Matching Paths" below to learn more
 export const config = {
-  matcher: ['/'],
+  matcher: ["/allorders", "/payment", "/cart", "/wishList", "/login", "/register"],
 }

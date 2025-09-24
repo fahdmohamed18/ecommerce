@@ -45,12 +45,22 @@ const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [products, setProducts] = useState<ProductCart[]>([]);
 
   async function addProductToCart(id: string): Promise<Cart | undefined> {
+    if (!session?.user?.token) {
+      console.log("User not authenticated");
+      return undefined;
+    }
+
     try {
-      const data: Cart = await addToCartAction(id);
+      const data: any = await addToCartAction(id);
+      if (data?.status === 'error') {
+        console.error("Add to cart error:", data.message);
+        return undefined;
+      }
       await getUserCart();
       return data;
     } catch (error) {
       console.error("Add product error:", error);
+      return undefined;
     }
   }
 

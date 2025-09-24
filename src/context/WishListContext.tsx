@@ -57,6 +57,11 @@ const WishListContextProvider = ({ children }: { children: React.ReactNode }) =>
   }
 
   async function addToWishList(id: string, product?: Product): Promise<WishListActionResponse | undefined> {
+    if (!session?.user?.token) {
+      console.log("User not authenticated");
+      return { status: 'error', message: 'User not authenticated' };
+    }
+
     if (wishListItems.some((p) => p._id === id)) {
       return { status: 'exists', message: 'Product already in wishlist' }
     }

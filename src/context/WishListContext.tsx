@@ -74,14 +74,25 @@ const WishListContextProvider = ({ children }: { children: React.ReactNode }) =>
       }
       setNumOfWishListItems(prevCount + 1)
 
-      const data: WishListActionResponse = await addToWishListAction(id)
+      // استخدام الـ token من الـ session مباشرة
+      const response = await fetch('https://ecommerce.routemisr.com/api/v1/wishlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'token': session.user.token
+        },
+        body: JSON.stringify({ productId: id })
+      });
+
+      const data = await response.json();
+      
       if (data.status !== 'success') {
         setWishListItems(prevItems)
         setNumOfWishListItems(prevCount)
       } else {
         await getWishList()
       }
-      return data
+      return { status: data.status, message: data.message || 'Success' }
     } catch (error) {
       setWishListItems(prevItems)
       setNumOfWishListItems(prevCount)

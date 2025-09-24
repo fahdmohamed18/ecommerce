@@ -51,11 +51,23 @@ const CartContextProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      const data: any = await addToCartAction(id);
+      // استخدام الـ token من الـ session مباشرة
+      const response = await fetch('https://ecommerce.routemisr.com/api/v1/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'token': session.user.token
+        },
+        body: JSON.stringify({ productId: id })
+      });
+
+      const data = await response.json();
+      
       if (data?.status === 'error') {
         console.error("Add to cart error:", data.message);
         return undefined;
       }
+      
       await getUserCart();
       return data;
     } catch (error) {
